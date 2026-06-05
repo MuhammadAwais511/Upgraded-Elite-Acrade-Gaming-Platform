@@ -1,9 +1,9 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { validateUser } from "../users";
+import { validateUser } from "../../../../../lib/users";
 
-const authOptions = {
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -16,10 +16,12 @@ const authOptions = {
           throw new Error("Email and password are required.");
         }
 
-        const user = await validateUser(credentials.email, credentials.password);
-        if (!user) {
-          throw new Error("Invalid email or password.");
-        }
+        const user = await validateUser(
+          credentials.email,
+          credentials.password
+        );
+
+        if (!user) return null;
 
         return {
           id: user.id,
@@ -28,39 +30,48 @@ const authOptions = {
         };
       },
     }),
+
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "select_account",
+        },
+      },
     }),
   ],
+
+  session: {
+    strategy: "jwt",
+  },
+
   pages: {
     signIn: "/signin",
     error: "/signin",
   },
-  session: {
-    strategy: "jwt" as const,
-  },
-  callbacks: {
-    async session({ session, token }) {
-      if (token) {
-        session.user = {
-          ...session.user,
-          id: token.sub,
-          name: token.name,
-          email: token.email,
-        };
-      }
-      return session;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-};
 
-const handler = NextAuth(authOptions);
+  callbacks: {
+  async jwt({ token, user }) {
+    if (user) {
+      token.id = user.id;
+      token.name = user.name;
+      token.email = user.email;
+    }
+    return token;
+  },
+
+  async session({ session, token }) {
+    if (session.user) {
+      session.user.id = token.id as string;
+      session.user.name = token.name as string;
+      session.user.email = token.email as string;
+    }
+    return session;
+  },
+},
+
+  secret: process.env.NEXTAUTH_SECRET,
+});
+
 export { handler as GET, handler as POST };

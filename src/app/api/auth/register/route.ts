@@ -1,4 +1,4 @@
-import { createUser, getUserByEmail } from "../users";
+import { createUser, getUserByEmail } from "../../../../../lib/users"
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

@@ -9,19 +9,36 @@ export default function ContactForm() {
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmitting(true);
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  setSubmitting(true);
 
-    // Fake submission - just show success message
-    setTimeout(() => {
-      setSuccess("Message sent successfully! We will reply soon!");
-      setName("");
-      setEmail("");
-      setMessage("");
-      setSubmitting(false);
-    }, 500);
-  };
+  try {
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, email, message }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Something went wrong");
+    }
+
+    setSuccess(data.message);
+    setName("");
+    setEmail("");
+    setMessage("");
+  } catch (err: any) {
+    setSuccess("");
+    alert(err.message);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 rounded-4xl border border-white/10 bg-slate-950/80 p-8 shadow-2xl shadow-black/20 backdrop-blur-xl">

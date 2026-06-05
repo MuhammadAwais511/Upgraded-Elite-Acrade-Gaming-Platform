@@ -15,8 +15,9 @@ const dataDirectory = path.join(process.cwd(), ".data");
 const usersFile = path.join(dataDirectory, "users.json");
 
 async function ensureUsersFile() {
+  await fs.mkdir(dataDirectory, { recursive: true });
+
   try {
-    await fs.mkdir(dataDirectory, { recursive: true });
     await fs.access(usersFile);
   } catch {
     await fs.writeFile(usersFile, "[]", "utf8");
@@ -26,16 +27,12 @@ async function ensureUsersFile() {
 async function readUsers(): Promise<UserRecord[]> {
   await ensureUsersFile();
   const raw = await fs.readFile(usersFile, "utf8");
-  try {
-    return JSON.parse(raw) as UserRecord[];
-  } catch {
-    return [];
-  }
+  return JSON.parse(raw || "[]");
 }
 
 async function writeUsers(users: UserRecord[]) {
   await ensureUsersFile();
-  await fs.writeFile(usersFile, JSON.stringify(users, null, 2), "utf8");
+  await fs.writeFile(usersFile, JSON.stringify(users, null, 2));
 }
 
 function hashPassword(password: string, salt: string) {
@@ -44,29 +41,41 @@ function hashPassword(password: string, salt: string) {
 
 export async function getUserByEmail(email: string) {
   const users = await readUsers();
-  return users.find((user) => user.email.toLowerCase() === email.toLowerCase()) || null;
+  return users.find((u) => u.email === email.toLowerCase()) || null;
 }
 
-export async function createUser({ name, email, password }: { name: string; email: string; password: string; }) {
+export async function createUser({
+  name,
+  email,
+  password,
+}: {
+  name: string;
+  email: string;
+  password: string;
+}) {
   const users = await readUsers();
+
   const salt = crypto.randomBytes(16).toString("hex");
-  const passwordHash = hashPassword(password, salt);
+
   const user: UserRecord = {
     id: crypto.randomUUID(),
     name,
     email: email.toLowerCase(),
-    passwordHash,
     salt,
+    passwordHash: hashPassword(password, salt),
     createdAt: new Date().toISOString(),
   };
+
   users.push(user);
   await writeUsers(users);
+
   return user;
 }
 
 export async function validateUser(email: string, password: string) {
-  const user = await getUserByEmail(email.toLowerCase());
+  const user = await getUserByEmail(email);
   if (!user) return null;
-  const testHash = hashPassword(password, user.salt);
-  return user.passwordHash === testHash ? user : null;
+
+  const hash = hashPassword(password, user.salt);
+  return hash === user.passwordHash ? user : null;
 }
