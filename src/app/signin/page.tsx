@@ -45,8 +45,11 @@ export default function SignInPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError(result.error || "Unable to sign in. Check your credentials.");
-      return;
+      setError(
+        result.error === "CredentialsSignin"
+          ? "Invalid email or password."
+          : "Unable to sign in.",
+      );
     }
 
     setSuccess("Signed in successfully. Redirecting to games...");
@@ -65,16 +68,23 @@ export default function SignInPage() {
 
         <div className="relative space-y-8">
           <div className="space-y-3 text-center">
-            <p className="text-sm uppercase tracking-[0.3em] text-purple-300/80">Secure sign in</p>
-            <h1 className="text-4xl font-semibold text-white sm:text-5xl">Access the Elite Arcade suite.</h1>
+            <p className="text-sm uppercase tracking-[0.3em] text-purple-300/80">
+              Secure sign in
+            </p>
+            <h1 className="text-4xl font-semibold text-white sm:text-5xl">
+              Access the Elite Arcade suite.
+            </h1>
             <p className="mx-auto max-w-2xl text-sm leading-7 text-slate-400">
-              Sign in with a real account or use Google to access the games and preserve security.
+              Sign in with a real account or use Google to access the games and
+              preserve security.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-200">Email</label>
+              <label className="block text-sm font-medium text-slate-200">
+                Email
+              </label>
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -84,7 +94,9 @@ export default function SignInPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-200">Password</label>
+              <label className="block text-sm font-medium text-slate-200">
+                Password
+              </label>
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -93,8 +105,16 @@ export default function SignInPage() {
                 type="password"
               />
             </div>
-            {error && <p className="rounded-3xl bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
-            {success && <p className="rounded-3xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{success}</p>}
+            {error && (
+              <p className="rounded-3xl bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {error}
+              </p>
+            )}
+            {success && (
+              <p className="rounded-3xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                {success}
+              </p>
+            )}
             <button
               disabled={loading}
               className="w-full rounded-3xl bg-linear-to-r from-purple-500 to-pink-500 px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
@@ -114,7 +134,10 @@ export default function SignInPage() {
           <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-sm text-slate-400">
             <p className="font-medium text-slate-200">Need an account?</p>
             <p>
-              <a href="/signup" className="text-purple-300 hover:text-purple-200">
+              <a
+                href="/signup"
+                className="text-purple-300 hover:text-purple-200"
+              >
                 Create one now
               </a>
             </p>

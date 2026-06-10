@@ -1,3 +1,4 @@
+// app/page.tsx
 import Hero from "../components/Hero";
 import GameCard from "../components/GameCard";
 
@@ -7,7 +8,7 @@ const featuredGames = [
     description: "Strategic number challenges with hints, score tracking and a modern UI.",
     href: "/games/guess-number",
     accent: "Smart",
-    thumb: "?",
+    thumb: "🎯",
   },
   {
     title: "Rock Paper Scissors",
@@ -22,6 +23,27 @@ const featuredGames = [
     href: "/games/tic-tac-toe",
     accent: "Classic",
     thumb: "✖️",
+  },
+  {
+    title: "Word Weaver",
+    description: "Test your vocabulary by guessing hidden words with helpful hints and sound effects.",
+    href: "/games/word-weaver",
+    accent: "Wordy",
+    thumb: "📝",
+  },
+  {
+    title: "Color Cascade",
+    description: "Race against time matching colors in this addictive Stroop effect challenge.",
+    href: "/games/color-cascade",
+    accent: "Vibrant",
+    thumb: "🎨",
+  },
+  {
+    title: "Memory Matrix",
+    description: "Train your brain by memorizing and recalling complex patterns under pressure.",
+    href: "/games/memory-matrix",
+    accent: "Brainy",
+    thumb: "🧠",
   },
 ];
 
@@ -57,7 +79,7 @@ export default function HomePage() {
                 <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">Play the latest challengers.</h2>
               </div>
               <p className="max-w-xl text-slate-300">
-                Explore three immersive experiences designed for speed, strategy, and polished interaction.
+                Explore six immersive experiences designed for speed, strategy, and polished interaction.
               </p>
             </div>
             <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -90,7 +112,7 @@ export default function HomePage() {
               <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Highlights</p>
               <ul className="mt-8 space-y-5 text-slate-300">
                 <li className="rounded-3xl border border-white/10 bg-white/5 p-5">• Secure sign in page with validation.</li>
-                <li className="rounded-3xl border border-white/10 bg-white/5 p-5">• Three playable games with unique mechanics.</li>
+                <li className="rounded-3xl border border-white/10 bg-white/5 p-5">• Six playable games with unique mechanics.</li>
                 <li className="rounded-3xl border border-white/10 bg-white/5 p-5">• Professional landing page and supporting pages.</li>
               </ul>
             </div>
@@ -99,8 +121,8 @@ export default function HomePage() {
           <section className="rounded-4xl border border-white/10 bg-slate-950/80 p-10 shadow-2xl shadow-black/20 backdrop-blur-xl">
             <div className="grid gap-8 lg:grid-cols-3">
               {[
-                { label: "Players", value: "32.4k" },
-                { label: "Games", value: "3 premium" },
+                { label: "Players", value: "48.2k" },
+                { label: "Games", value: "6 premium" },
                 { label: "Uptime", value: "99.98%" },
               ].map((stat) => (
                 <div key={stat.label} className="rounded-3xl bg-white/5 p-8 text-center">
