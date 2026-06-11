@@ -3,24 +3,22 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import AuthGuard from "../../../components/AuthGuard";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Sparkles, 
-  TrendingUp, 
-  TrendingDown, 
-  Target, 
-  Trophy, 
-  RotateCcw, 
-  Zap, 
-  BarChart3, 
+import {
+  Sparkles,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Trophy,
+  RotateCcw,
+  Zap,
+  BarChart3,
   HelpCircle,
   Star,
   Clock,
   Hash,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
-
-const generateNumber = () => Math.floor(Math.random() * 100) + 1;
 
 interface Particle {
   id: number;
@@ -39,10 +37,18 @@ interface GameHistoryEntry {
 type Difficulty = "easy" | "medium" | "hard";
 type GameStatus = "idle" | "correct" | "error" | "hint";
 
+const generateNewNumber = (max: number): number =>
+  Math.floor(Math.random() * max) + 1;
+
 export default function GuessNumberPage() {
-  const [secretNumber, setSecretNumber] = useState<number>(generateNumber());
+  const [maxNumber, setMaxNumber] = useState<number>(100);
+  const [secretNumber, setSecretNumber] = useState<number>(() =>
+    generateNewNumber(100)
+  );
   const [guess, setGuess] = useState<string>("");
-  const [feedback, setFeedback] = useState<string>("I'm thinking of a number between 1 and 100. Can you guess it?");
+  const [feedback, setFeedback] = useState<string>(
+    "I'm thinking of a number between 1 and 100. Can you guess it?"
+  );
   const [attempts, setAttempts] = useState<number>(0);
   const [bestScore, setBestScore] = useState<number | null>(null);
   const [status, setStatus] = useState<GameStatus>("idle");
@@ -55,8 +61,8 @@ export default function GuessNumberPage() {
   const [celebration, setCelebration] = useState<boolean>(false);
   const [gameHistory, setGameHistory] = useState<GameHistoryEntry[]>([]);
   const [particles] = useState<Particle[]>(() => {
-    const width = typeof window !== 'undefined' ? window.innerWidth : 1000;
-    const height = typeof window !== 'undefined' ? window.innerHeight : 1000;
+    const width = typeof window !== "undefined" ? window.innerWidth : 1000;
+    const height = typeof window !== "undefined" ? window.innerHeight : 1000;
     return Array.from({ length: 20 }, (_, index) => ({
       id: index,
       x: Math.random() * width,
@@ -65,7 +71,7 @@ export default function GuessNumberPage() {
       delay: Math.random() * 2,
     }));
   });
-  
+
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -74,9 +80,7 @@ export default function GuessNumberPage() {
   }, []);
 
   useEffect(() => {
-    if (!isTimerRunning) {
-      return;
-    }
+    if (!isTimerRunning) return;
 
     const intervalId = window.setInterval(() => {
       setTimer((prev) => prev + 1);
@@ -92,21 +96,27 @@ export default function GuessNumberPage() {
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const getDifficultySettings = (diff: Difficulty) => {
-    switch(diff) {
-      case "easy": return { maxAttempts: Infinity, hints: 5, range: 50 };
-      case "hard": return { maxAttempts: 7, hints: 1, range: 100 };
-      default: return { maxAttempts: 10, hints: 3, range: 100 };
+    switch (diff) {
+      case "easy":
+        return { maxAttempts: Infinity, hints: 5 };
+      case "hard":
+        return { maxAttempts: 7, hints: 1 };
+      default:
+        return { maxAttempts: 10, hints: 3 };
     }
   };
 
-  const resetGame = useCallback(() => {
-    setSecretNumber(generateNumber());
+  // Central reset function that respects the chosen range and difficulty
+  const resetGame = (newMax: number, newDiff: Difficulty) => {
+    setSecretNumber(generateNewNumber(newMax));
     setGuess("");
-    setFeedback("I'm thinking of a number between 1 and 100. Can you guess it?");
+    setFeedback(
+      `I'm thinking of a number between 1 and ${newMax}. Can you guess it?`
+    );
     setAttempts(0);
     setStatus("idle");
     setGuesses([]);
@@ -116,22 +126,16 @@ export default function GuessNumberPage() {
     setLastGuess(null);
     setCelebration(false);
     inputRef.current?.focus();
-  }, []);
+  };
 
   const handleDifficultyChange = (newDifficulty: Difficulty) => {
     setDifficulty(newDifficulty);
-    setSecretNumber(generateNumber());
-    setGuess("");
-    setFeedback("I'm thinking of a number between 1 and 100. Can you guess it?");
-    setAttempts(0);
-    setStatus("idle");
-    setGuesses([]);
-    setShowHint(false);
-    setTimer(0);
-    setIsTimerRunning(false);
-    setLastGuess(null);
-    setCelebration(false);
-    inputRef.current?.focus();
+    resetGame(maxNumber, newDifficulty);
+  };
+
+  const handleRangeChange = (newRange: number) => {
+    setMaxNumber(newRange);
+    resetGame(newRange, difficulty);
   };
 
   const getHint = () => {
@@ -139,14 +143,14 @@ export default function GuessNumberPage() {
     setStatus("hint");
     const range = Math.floor(10 * (Math.random() + 1));
     const lowerBound = Math.max(1, secretNumber - range);
-    const upperBound = Math.min(100, secretNumber + range);
+    const upperBound = Math.min(maxNumber, secretNumber + range);
     setFeedback(`Hint: The number is between ${lowerBound} and ${upperBound}`);
   };
 
   const handleGuess = () => {
     const value = Number(guess);
-    if (!value || value < 1 || value > 100) {
-      setFeedback("Please enter a valid number between 1 and 100.");
+    if (!value || value < 1 || value > maxNumber) {
+      setFeedback(`Please enter a valid number between 1 and ${maxNumber}.`);
       setStatus("error");
       return;
     }
@@ -158,31 +162,38 @@ export default function GuessNumberPage() {
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
     setLastGuess(value);
-    setGuesses(prev => [...prev, value].slice(-10));
+    setGuesses((prev) => [...prev, value].slice(-10));
 
     if (value === secretNumber) {
-      setFeedback(`🎉 Amazing! You found the number ${secretNumber} in ${nextAttempts} attempts!`);
+      setFeedback(
+        `🎉 Amazing! You found the number ${secretNumber} in ${nextAttempts} attempts!`
+      );
       setStatus("correct");
       setIsTimerRunning(false);
       setCelebration(true);
-      
+
       if (bestScore === null || nextAttempts < bestScore) {
         setBestScore(nextAttempts);
       }
-      
-      setGameHistory(prev => [...prev, {
-        attempts: nextAttempts,
-        time: timer,
-        date: new Date().toLocaleDateString()
-      }].slice(-5));
-      
+
+      setGameHistory((prev) =>
+        [
+          ...prev,
+          {
+            attempts: nextAttempts,
+            time: timer,
+            date: new Date().toLocaleDateString(),
+          },
+        ].slice(-5)
+      );
+
       setTimeout(() => setCelebration(false), 3000);
       return;
     }
 
     const diff = Math.abs(value - secretNumber);
     let hint = "";
-    
+
     if (diff <= 5) hint = "You're burning hot! 🔥";
     else if (diff <= 10) hint = "Getting warmer! ☀️";
     else if (diff <= 20) hint = "Warm, but not quite there 🌤️";
@@ -199,7 +210,7 @@ export default function GuessNumberPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleGuess();
+    if (e.key === "Enter") handleGuess();
   };
 
   return (
@@ -211,18 +222,15 @@ export default function GuessNumberPage() {
             <motion.div
               key={particle.id}
               className="absolute w-2 h-2 bg-purple-500/30 rounded-full"
-              initial={{ 
-                x: particle.x,
-                y: particle.y 
-              }}
+              initial={{ x: particle.x, y: particle.y }}
               animate={{
                 y: [particle.y, particle.y - 30, particle.y],
-                opacity: [0.2, 0.5, 0.2]
+                opacity: [0.2, 0.5, 0.2],
               }}
               transition={{
                 duration: particle.duration,
                 repeat: Infinity,
-                delay: particle.delay
+                delay: particle.delay,
               }}
             />
           ))}
@@ -245,31 +253,53 @@ export default function GuessNumberPage() {
                 Guess The Number
               </h1>
               <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
-                Test your intuition and logic with this classic number guessing game. 
-                Can you find the secret number in the fewest attempts?
+                Test your intuition and logic with this classic number guessing
+                game. Can you find the secret number in the fewest attempts?
               </p>
             </motion.div>
 
-            {/* Difficulty Selector */}
+            {/* Difficulty & Range Selectors */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="flex justify-center gap-2 mb-8"
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8"
             >
-              {(["easy", "medium", "hard"] as Difficulty[]).map((diff) => (
-                <button
-                  key={diff}
-                  onClick={() => handleDifficultyChange(diff)}
-                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
-                    difficulty === diff
-                      ? "bg-purple-500 text-white shadow-lg shadow-purple-500/25"
-                      : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                  }`}
-                >
-                  {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                </button>
-              ))}
+              {/* Difficulty */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400 mr-1">Difficulty:</span>
+                {(["easy", "medium", "hard"] as Difficulty[]).map((diff) => (
+                  <button
+                    key={diff}
+                    onClick={() => handleDifficultyChange(diff)}
+                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                      difficulty === diff
+                        ? "bg-purple-500 text-white shadow-lg shadow-purple-500/25"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    }`}
+                  >
+                    {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Number Range */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400 mr-1">Range:</span>
+                {([10, 20, 50, 100] as number[]).map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => handleRangeChange(num)}
+                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                      maxNumber === num
+                        ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/25"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
             </motion.div>
 
             <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
@@ -296,7 +326,9 @@ export default function GuessNumberPage() {
                         className="text-center"
                       >
                         <Trophy className="w-16 h-16 text-yellow-400 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-white">Congratulations!</p>
+                        <p className="text-2xl font-bold text-white">
+                          Congratulations!
+                        </p>
                       </motion.div>
                     </motion.div>
                   )}
@@ -308,10 +340,13 @@ export default function GuessNumberPage() {
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   className={`p-4 rounded-2xl mb-6 flex items-start gap-3 ${
-                    status === "correct" ? "bg-linear-to-r from-emerald-500/20 to-emerald-600/20 border border-emerald-500/30" :
-                    status === "error" ? "bg-linear-to-r from-red-500/20 to-orange-500/20 border border-red-500/30" :
-                    status === "hint" ? "bg-linear-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30" :
-                    "bg-slate-800/50 border border-slate-700/50"
+                    status === "correct"
+                      ? "bg-linear-to-r from-emerald-500/20 to-emerald-600/20 border border-emerald-500/30"
+                      : status === "error"
+                      ? "bg-linear-to-r from-red-500/20 to-orange-500/20 border border-red-500/30"
+                      : status === "hint"
+                      ? "bg-linear-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30"
+                      : "bg-slate-800/50 border border-slate-700/50"
                   }`}
                 >
                   {status === "correct" ? (
@@ -329,7 +364,7 @@ export default function GuessNumberPage() {
                 {/* Guess Input */}
                 <div className="space-y-4">
                   <label className="block text-sm text-slate-400 mb-2">
-                    Enter your guess (1-100)
+                    Enter your guess (1-{maxNumber})
                   </label>
                   <div className="flex gap-3">
                     <div className="relative flex-1">
@@ -340,7 +375,7 @@ export default function GuessNumberPage() {
                         onKeyDown={handleKeyDown}
                         type="number"
                         min={1}
-                        max={100}
+                        max={maxNumber}
                         disabled={status === "correct"}
                         className="w-full px-6 py-3 bg-slate-800/50 border border-slate-600/50 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition disabled:opacity-50"
                         placeholder="Type your guess..."
@@ -373,7 +408,7 @@ export default function GuessNumberPage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={resetGame}
+                      onClick={() => resetGame(maxNumber, difficulty)}
                       className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 transition flex items-center justify-center gap-2"
                     >
                       <RotateCcw className="w-4 h-4" />
@@ -404,8 +439,12 @@ export default function GuessNumberPage() {
                           }`}
                         >
                           <div className="flex items-center gap-1">
-                            {g < secretNumber && <TrendingUp className="w-3 h-3" />}
-                            {g > secretNumber && <TrendingDown className="w-3 h-3" />}
+                            {g < secretNumber && (
+                              <TrendingUp className="w-3 h-3" />
+                            )}
+                            {g > secretNumber && (
+                              <TrendingDown className="w-3 h-3" />
+                            )}
                             {g}
                           </div>
                         </motion.div>
@@ -428,7 +467,9 @@ export default function GuessNumberPage() {
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Timer</span>
                   </div>
-                  <p className="text-3xl font-bold text-white font-mono">{formatTime(timer)}</p>
+                  <p className="text-3xl font-bold text-white font-mono">
+                    {formatTime(timer)}
+                  </p>
                 </motion.div>
 
                 {/* Stats Card */}
@@ -445,7 +486,9 @@ export default function GuessNumberPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400">Attempts</span>
-                      <span className="text-xl font-bold text-white">{attempts}</span>
+                      <span className="text-xl font-bold text-white">
+                        {attempts}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400">Best Score</span>
@@ -476,7 +519,10 @@ export default function GuessNumberPage() {
                     </h3>
                     <div className="space-y-2">
                       {gameHistory.map((game, i) => (
-                        <div key={i} className="flex justify-between items-center text-sm">
+                        <div
+                          key={i}
+                          className="flex justify-between items-center text-sm"
+                        >
                           <span className="text-slate-400">{game.date}</span>
                           <span className="text-slate-300">
                             {game.attempts} tries • {formatTime(game.time)}
